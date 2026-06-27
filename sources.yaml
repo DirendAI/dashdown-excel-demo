@@ -1,0 +1,11 @@
+# Excel connector for the Super Store Sales 2015 workbook.
+# Each sheet in the workbook (Orders, Returns, Users) becomes a SQL table.
+# Omit `sheets:` to load every sheet, or list only the ones you need.
+superstore:
+  type: excel
+  path: data/excel/SuperStoreUS-2015.xlsx
+  header: true
+  sheets:
+    - Orders
+    - Returns
+    - Users

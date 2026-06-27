@@ -1,0 +1,11 @@
+# Dashdown build artifacts
+.dist/
+.pdf/
+.shots/
+
+# Blog post + screenshots (kept out of the dashboard repo)
+extra/
+
+# Local agent/tooling directories
+.claude/
+.vibe/

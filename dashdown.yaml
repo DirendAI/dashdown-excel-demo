@@ -1,0 +1,31 @@
+title: Super Store Sales — Dashdown Excel Demo
+branding:
+  logo: https://raw.githubusercontent.com/DirendAI/dashdown/main/docs/public/favicon.svg
+  palette: ["#6366f1", "#22c55e", "#f59e0b", "#ec4899", "#06b6d4"]
+
+# Theme customization
+theme:
+  primary: "#6366f1"
+  background: "#f8fafc"
+  card:
+    background: "#ffffff"
+    border: "#e2e8f0"
+  typography:
+    font: "Inter, system-ui, sans-serif"
+    heading_font: "Inter, system-ui, sans-serif"
+
+# Built-in full-text search box in the header — disabled for this single-page demo
+search:
+  enabled: false
+
+# LLM provider for the <Ask> component (natural-language commentary on a query).
+# Requires `pip install 'dashdown-md[mistral]'` and a MISTRAL_API_KEY in the
+# environment. Swap `model` to mistral-large-latest for higher-quality answers.
+llm:
+  provider: mistral
+  api_key: ${MISTRAL_API_KEY}
+  model: mistral-small-latest
+
+# Telemetry
+telemetry:
+  enabled: false
