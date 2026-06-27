@@ -3,8 +3,7 @@
 A retail analytics dashboard built from a single **Excel workbook** with
 [Dashdown](https://github.com/DirendAI/dashdown). Every chart below is plain Markdown plus SQL,
 querying `SuperStoreUS-2015.xlsx` through the Excel connector — its `Orders`,
-`Returns`, and `Users` sheets each become a SQL table you can JOIN across. See
-[the tutorial](/blog-excel-connector-demo) for a step-by-step walkthrough.
+`Returns`, and `Users` sheets each become a SQL table you can JOIN across.
 
 ## 📊 Business Overview
 
