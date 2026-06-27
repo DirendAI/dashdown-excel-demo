@@ -4,6 +4,8 @@ A minimal, end-to-end example of building an interactive analytics dashboard fro
 a single **Excel workbook** with [Dashdown](https://github.com/DirendAI/dashdown) — no JavaScript,
 no build step, just Markdown + SQL.
 
+**🔗 Live demo: https://gregahren.github.io/dashdown-excel-demo/**
+
 This repo is the worked example behind the tutorial
 **[Getting Started with the Excel Connector in Dashdown](https://medium.com/@grega.hren/creating-excel-connector-dashboards-in-dashdown-8b4f9438e344)**.
 Every snippet in that post comes from the dashboard here.
