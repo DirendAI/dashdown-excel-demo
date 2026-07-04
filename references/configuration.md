@@ -38,17 +38,6 @@ format:                        # → Formatting
   currency: USD
   date_format: MMM D, YYYY
 
-auth:                          # → Authentication
-  type: basic
-  users:
-    admin: ${ADMIN_PASSWORD}
-
-embed:                         # → Embedding
-  enabled: true
-  frame_ancestors: ["https://example.com"]
-  secret: ${EMBED_SECRET}
-  token_ttl: 3600
-
 llm:                           # → Ask
   provider: anthropic
   api_key: ${ANTHROPIC_API_KEY}
@@ -60,6 +49,9 @@ global_filters:                # → Filters
     default: last_30_days
     start_param: date_start
     end_param: date_end
+
+filters:                       # → Filters
+  debounce: 300                # ms of quiet before a filter change re-fetches
 
 search:                        # → Full-text search
   enabled: true
@@ -84,7 +76,7 @@ python_queries:                # → Python queries
 :::note
 **Theme** is not configured here — it's viewer-controlled. The page follows the
 visitor's OS light/dark preference by default; the header toggle overrides it
-(saved per browser). An embedding host can pin a theme with `?_theme=light|dark`.
+(saved per browser).
 To restyle the look — colours, radii, spacing, chrome — drop a `assets/custom.css`
 in your project; see **[Theming & styling](/theming)**.
 :::
@@ -116,20 +108,6 @@ Project-wide defaults for number, currency and date display (`locale`, `currency
 
 → **[Formatting](/formatting)** for the full reference.
 
-## `auth`
-
-Password-protect the whole dashboard. `type: basic` (HTTP Basic) or `type: api_key`
-(a shared secret in a header); default `none`. Secrets support `${VAR}`.
-
-→ **[Authentication](/authentication)** for setup and the cross-origin caveats.
-
-## `embed`
-
-Serve pages chrome-less inside an iframe on another site, with framing allowlists
-and (when `auth` is on) signed access tokens.
-
-→ **[Embedding](/embedding)** for the framing rules and token flow.
-
 ## `llm`
 
 The LLM gateway used by [`<Ask />`](/ai/ask). Provider-only — `provider`
@@ -145,6 +123,26 @@ opts in by using the `${date_start}` / `${date_end}` placeholders. The selection
 persists across navigation.
 
 → **[Filters & parameters](/filters)** for presets, params and how queries opt in.
+
+## `filters`
+
+Cross-cutting behavior for the interactive filter controls (`<Search>`,
+`<Combobox>`, `<Slider>`, `<RangeSlider>`, `<DateRange>`).
+
+```yaml
+filters:
+  debounce: 300   # ms of quiet after the last keystroke / slider drag before
+                  # a filter change commits its value and re-fetches data
+```
+
+| Key        | Default | Purpose                                                            |
+| ---------- | ------- | ----------------------------------------------------------------- |
+| `debounce` | `300`   | Project-wide quiet period (ms) before a filter change re-fetches. A burst of keystrokes or slider drag ticks coalesces into a single fetch. Raise it for a slow, per-query-expensive warehouse (e.g. BigQuery) where firing on partial input piles up requests; lower it for a snappy local backend. |
+
+Any single control overrides this with its own `debounce=` attribute
+(`<Search name="q" debounce={600} />`).
+
+→ **[Filters & parameters](/filters)** for the controls themselves.
 
 ## `search`
 

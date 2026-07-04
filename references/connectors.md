@@ -7,12 +7,12 @@
 
 Connectors are declared in `sources.yaml` and loaded **lazily** the first time a
 query asks for that type. Each backend's heavy dependencies are an optional `pip`
-extra, so you only install what you use. A query's `connector=` (default `main`)
-chooses which one runs it.
+extra, so you only install what you use. A query's `connector=` chooses which one
+runs it; omitted, the [default source](#the-default-source) answers.
 
 ```yaml
 # sources.yaml
-main:
+sales_data:
   type: csv
   directory: data
 
@@ -23,6 +23,33 @@ warehouse:
   user: ${PG_USER}
   password: ${PG_PASSWORD}
 ```
+
+## The default source
+
+A query with no `connector=` runs on the project's **default source**:
+
+1. the source named by the top-level `default:` key in `sources.yaml`;
+2. otherwise, if exactly **one** source is configured, that one — a
+   single-source project never needs `connector=` anywhere.
+
+```yaml
+# sources.yaml
+default: warehouse        # queries without connector= run here
+
+warehouse:
+  type: postgres
+  host: ${PG_HOST}
+  database: analytics
+
+archive:
+  type: duckdb
+  path: data/archive.duckdb
+```
+
+Source **names carry no meaning** — call them whatever reads well (`default` is
+the one reserved word). A `default:` naming an unknown source fails at startup,
+and with several sources and no `default:` there is *no* default: a query that
+omits `connector=` fails with a message asking you to set one.
 
 ## The built-in connectors
 
@@ -39,6 +66,7 @@ warehouse:
 | `mssql` | SQL DB-API | `dashdown-md[mssql]` | [SQL Server](/connectors/mssql) |
 | `snowflake` | SQL DB-API | `dashdown-md[snowflake]` | [Snowflake](/connectors/snowflake) |
 | `bigquery` | SQL DB-API | `dashdown-md[bigquery]` | [BigQuery](/connectors/bigquery) |
+| `clickhouse` | SQL DB-API | `dashdown-md[clickhouse]` | [ClickHouse](/connectors/clickhouse) |
 | `excel` | Tabular | `dashdown-md[excel]` | [Excel](/connectors/excel) |
 | `sheets` | Tabular | `dashdown-md[sheets]` | [Google Sheets](/connectors/sheets) |
 | `dax` | REST (Fabric/PBI) | `dashdown-md[dax]` | [DAX / Fabric](/connectors/dax) |
@@ -64,7 +92,7 @@ in the directory becomes a queryable view named after the file (`sales.csv` →
 
 ```yaml
 # sources.yaml
-main:
+sales_data:
   type: csv
   directory: data        # folder of .csv files, relative to the project
 ```
@@ -99,7 +127,7 @@ and `.jsonl` files are all picked up.
 
 ```yaml
 # sources.yaml
-main:
+sales_data:
   type: json
   directory: data        # folder of .json/.ndjson/.jsonl files, relative to the project
 ```
@@ -134,7 +162,7 @@ or type inference.
 
 ```yaml
 # sources.yaml
-main:
+sales_data:
   type: parquet
   directory: data        # folder of .parquet/.pq files, relative to the project
 ```
@@ -228,7 +256,7 @@ Parquet, JSON, and remote files via its extensions.
 
 ```yaml
 # sources.yaml
-main:
+sales_data:
   type: duckdb
   path: data/warehouse.duckdb    # omit for an in-memory database
 ```
@@ -249,7 +277,7 @@ DuckDB reads JSON (and Parquet) straight from a path or URL — no load step. Us
 
 ```yaml
 # sources.yaml
-main:
+sales_data:
   type: duckdb          # no `path:` → in-memory; files are read in the query
 ```
 
@@ -591,6 +619,39 @@ If `credentials_file` is omitted, Application Default Credentials are used.
 **Install:** `uv add 'dashdown-md[bigquery]'`.
 
 
+<!-- source: docs/pages/connectors/clickhouse.md -->
+
+# ClickHouse connector
+
+Connects to ClickHouse over the shared SQL DB-API base (lazy connect, JSON-safe
+value coercion, reconnect-and-retry) via `clickhouse-connect`, ClickHouse's
+official HTTP client. Works with self-hosted ClickHouse and ClickHouse Cloud.
+
+```yaml
+# sources.yaml
+events:
+  type: clickhouse
+  host: ${CH_HOST}
+  port: 8443
+  database: analytics
+  user: ${CH_USER}
+  password: ${CH_PASSWORD}
+  secure: true          # TLS — required by ClickHouse Cloud
+```
+
+| Key            | Purpose                                                         |
+| -------------- | --------------------------------------------------------------- |
+| `host` / `port`| Server address. Port is optional — the driver defaults to `8123` (`8443` when `secure`). |
+| `database`     | Database name (`db` also accepted).                             |
+| `user` / `password` | Credentials (`username` also accepted).                    |
+| `secure`       | Connect over TLS.                                               |
+| `dsn` / `url`  | …or a single `clickhouse://user:pass@host:port/db` URL instead of the above. |
+| `connect_args` | Extra kwargs passed to the driver.                              |
+
+**Install:** `uv add 'dashdown-md[clickhouse]'` (or `pip install 'dashdown-md[clickhouse]'`).
+Secrets support `${ENV_VAR}` expansion — keep them out of the YAML.
+
+
 <!-- source: docs/pages/connectors/dax.md -->
 
 # DAX connector (Microsoft Fabric / Power BI)
@@ -618,6 +679,62 @@ fabric:
 | `workspace_id`  | Fabric/Power BI workspace.               |
 | `dataset_id`    | The dataset to query.                    |
 
+## Writing a DAX query
+
+DAX queries start with `EVALUATE` and return a table. The most useful building
+block is `SUMMARIZECOLUMNS`, which groups by one or more columns and projects
+your measures alongside them — the table-shaped result a chart needs. Column
+names come back **shortened**: `'Date'[Month]` arrives as just `Month`, so that's
+the name you reference in `x=`/`y=`.
+
+Define it once in the query library (`queries/revenue_by_month.dax`):
+
+```dax
+EVALUATE
+SUMMARIZECOLUMNS(
+    'Date'[Month],
+    "Revenue", [Total Revenue]
+)
+ORDER BY 'Date'[Month]
+```
+
+Then reference it by name on a page and feed it to a chart:
+
+```markdown
+<LineChart data={revenue_by_month} x="Month" y="Revenue" />
+```
+
+Or inline on a single page, choosing the connector explicitly:
+
+````markdown
+```dax revenue_by_region connector=fabric
+EVALUATE
+SUMMARIZECOLUMNS(
+    'Store'[Region],
+    "Revenue", [Total Revenue]
+)
+```
+
+<BarChart data={revenue_by_region} x="Region" y="Revenue" />
+````
+
+### Parameters and filtering
+
+`${param}` substitution works the same as the SQL connectors, but filter values
+in DAX are **string literals wrapped in double quotes** (`"…"`) — and Dashdown
+escapes the value's quotes (`"` → `""`) automatically for that context. A
+`<Dropdown>` feeding `${region}` looks like:
+
+```dax
+EVALUATE
+SUMMARIZECOLUMNS(
+    'Date'[Month],
+    FILTER(VALUES('Store'[Region]), 'Store'[Region] = "${region}"),
+    "Revenue", [Total Revenue]
+)
+ORDER BY 'Date'[Month]
+```
+
 Library queries for this connector live in `queries/*.dax`. **Install:**
 `uv add 'dashdown-md[dax]'`.
 
@@ -631,7 +748,7 @@ Connects to a [Cube](https://cube.dev) deployment — a standalone semantic-laye
 JSON API. Unlike every other connector, **Cube isn't queried with SQL**: the
 connector is a thin HTTP+JWT client that powers the [`backend: cube` semantic
 layer](/semantic-layer/cube), so you reference its model with
-the `metric={…} by={…}` grammar rather than `:::query` SQL.
+the `metric={…} by={…}` grammar rather than inline SQL query blocks.
 
 :::warning Experimental — preview
 The Cube integration is **preview** — fully unit-tested with fakes but not yet

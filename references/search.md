@@ -50,7 +50,7 @@ your own box on a page.
 
 1. At render time the framework builds a **search index** — one entry per page
    holding its title, section headings (with anchor ids), and plain body text.
-   The `:::query` SQL is already stripped, so query bodies never enter the index.
+   Inline-query SQL is already stripped, so query bodies never enter the index.
 2. The index is served live at `GET /_dashdown/api/search-index`, and baked into
    static exports as `_dashdown/search-index.json`.
 3. The browser fetches the index once and does **all ranking client-side** —
@@ -58,8 +58,7 @@ your own box on a page.
    body occurrences; every search term must appear for a page to match.
 
 Because the index is plain JSON and the ranking is in the browser, search works
-identically on the live server, in a `dashdown build` static export, and inside
-an embedded page.
+identically on the live server and in a `dashdown build` static export.
 
 :::note
 Unlike the `<Search>` *filter* (which drives SQL substitution and is stripped

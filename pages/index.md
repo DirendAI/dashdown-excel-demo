@@ -7,7 +7,7 @@ querying `SuperStoreUS-2015.xlsx` through the Excel connector — its `Orders`,
 
 ## 📊 Business Overview
 
-:::query name=sales_overview connector=superstore
+```sql sales_overview
 SELECT
     COUNT(*) as total_orders,
     COUNT(DISTINCT "Customer ID") as unique_customers,
@@ -15,7 +15,7 @@ SELECT
     SUM("Profit") as total_profit,
     AVG("Sales") as avg_order_value
 FROM Orders
-:::
+```
 
 <Grid cols=4>
 <Counter
@@ -52,7 +52,7 @@ FROM Orders
 
 ## 🚀 Sales Performance
 
-:::query name=sales_by_category connector=superstore
+```sql sales_by_category
 SELECT
     "Product Category" as category,
     SUM("Sales") as total_sales,
@@ -61,7 +61,7 @@ SELECT
 FROM Orders
 GROUP BY "Product Category"
 ORDER BY total_sales DESC
-:::
+```
 
 <Grid cols=2>
 <BarChart
@@ -88,7 +88,7 @@ ORDER BY total_sales DESC
 
 ### Monthly Sales & Profit Trend
 
-:::query name=monthly_sales connector=superstore
+```sql monthly_sales
 SELECT
     strftime("Order Date", '%Y-%m') as month,
     SUM("Sales") as total_sales,
@@ -96,7 +96,7 @@ SELECT
 FROM Orders
 GROUP BY month
 ORDER BY month
-:::
+```
 
 <LineChart
     data={monthly_sales}
@@ -111,8 +111,14 @@ ORDER BY month
 
 ### 🤖 AI Commentary
 
-The `<Ask>` component sends a query's result to an LLM and renders a plain-language
-read-out inline — turning a chart into an explained insight.
+Dashdown has two ways to put an LLM read-out next to a chart:
+
+- **`<Ask>`** sends a query's result to an LLM and renders a plain-language summary
+  inline. On a static build it's **baked once at build time**, so it ships as part
+  of the page — that's what you see below on the live demo.
+- **`explain`** (a chart attribute, new in 0.1.10) adds a hover-revealed ✨ button
+  that generates commentary **on demand** — see the "Sales by Region" chart. It needs
+  a live server (`dashdown serve`), so it's disabled on this static GitHub Pages build.
 
 <Ask
     data={monthly_sales}
@@ -124,7 +130,7 @@ read-out inline — turning a chart into an explained insight.
 
 ## 👥 Customer Segments
 
-:::query name=customer_segments connector=superstore
+```sql customer_segments
 SELECT
     "Customer Segment" as segment,
     COUNT(DISTINCT "Customer ID") as customer_count,
@@ -132,7 +138,7 @@ SELECT
 FROM Orders
 GROUP BY "Customer Segment"
 ORDER BY total_sales DESC
-:::
+```
 
 <Grid cols=2>
 <PieChart
@@ -159,7 +165,7 @@ ORDER BY total_sales DESC
 
 ## 🗺️ Regional Analysis
 
-:::query name=regional_sales connector=superstore
+```sql regional_sales
 SELECT
     "Region" as region,
     SUM("Sales") as total_sales,
@@ -167,7 +173,7 @@ SELECT
 FROM Orders
 GROUP BY "Region"
 ORDER BY total_sales DESC
-:::
+```
 
 <BarChart
     data={regional_sales}
@@ -178,6 +184,7 @@ ORDER BY total_sales DESC
     color="#06b6d4"
     format="currency"
     decimals=0
+    explain="Which regions lead and lag on revenue, and is any region an outlier worth a closer look?"
 />
 
 ---
@@ -192,7 +199,7 @@ own SQL table. So you can **JOIN across sheets** exactly like a relational datab
 Joining `Orders` to the `Returns` sheet (on `Order ID`) reveals which categories come
 back most by value.
 
-:::query name=returns_by_category connector=superstore
+```sql returns_by_category
 SELECT
     o."Product Category" as category,
     COUNT(DISTINCT o."Order ID") as returned_orders,
@@ -202,7 +209,7 @@ JOIN (SELECT DISTINCT "Order ID" AS rid FROM Returns) r
   ON o."Order ID" = r.rid
 GROUP BY o."Product Category"
 ORDER BY returned_sales DESC
-:::
+```
 
 <BarChart
     data={returns_by_category}
@@ -220,7 +227,7 @@ ORDER BY returned_sales DESC
 The `Users` sheet maps each region to its manager. Join it to the orders to see who
 owns which numbers — including the region running at a loss.
 
-:::query name=regional_managers connector=superstore
+```sql regional_managers
 SELECT
     u."Region" as region,
     u."Manager" as manager,
@@ -231,7 +238,7 @@ FROM Orders o
 JOIN Users u ON o."Region" = u."Region"
 GROUP BY u."Region", u."Manager"
 ORDER BY total_sales DESC
-:::
+```
 
 <Table
     data={regional_managers}
@@ -268,7 +275,7 @@ option in each dropdown clears that filter.
 />
 </Grid>
 
-:::query name=filtered_orders connector=superstore
+```sql filtered_orders
 SELECT
     "Order ID" as order_id,
     "Order Date" as order_date,
@@ -285,7 +292,7 @@ WHERE ('${category}' = '' OR "Product Category" = '${category}')
   AND ('${segment}' = '' OR "Customer Segment" = '${segment}')
 ORDER BY "Sales" DESC
 LIMIT 50
-:::
+```
 
 <Table
     data={filtered_orders}
@@ -299,7 +306,7 @@ LIMIT 50
 
 ## 📦 Top Products
 
-:::query name=top_products connector=superstore
+```sql top_products
 SELECT
     "Product Name" as product_name,
     "Product Category" as category,
@@ -310,7 +317,7 @@ FROM Orders
 GROUP BY "Product Name", "Product Category"
 ORDER BY total_sales DESC
 LIMIT 15
-:::
+```
 
 <Table
     data={top_products}

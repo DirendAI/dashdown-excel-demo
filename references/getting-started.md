@@ -63,7 +63,7 @@ A Dashdown *project* is a directory the CLI points at:
 
 ```text
 my-dashboard/
-├── dashdown.yaml     # project config (title, auth, embed, branding, …)
+├── dashdown.yaml     # project config (title, branding, format, …)
 ├── sources.yaml      # data connectors
 ├── pages/            # one .md per route  →  pages/sales.md = /sales
 │   └── index.md      # the home page  →  /
@@ -74,8 +74,8 @@ my-dashboard/
 └── assets/           # custom.css, logos, images
 ```
 
-`dashdown.yaml` configures the whole dashboard (title, auth, branding,
-embedding, …) — see **[Configuration](/configuration)** for every block.
+`dashdown.yaml` configures the whole dashboard (title, branding, formatting,
+…) — see **[Configuration](/configuration)** for every block.
 
 :::tip
 There are two distinct domains: **the framework** (the `dashdown` package you
@@ -95,7 +95,7 @@ real-world project to learn from.
 You have a project running. Where to go from here:
 
 - **[Writing pages](/pages)** — frontmatter, callouts, Mermaid, and includes.
-- **[Queries](/queries)** — `:::query` blocks, `${param}` substitution, and the shared query library.
+- **[Queries](/queries)** — inline ```` ```sql name ```` blocks, `${param}` substitution, and the shared query library.
 - **[Components](/components)** — charts, tables, counters, and pivots.
 - **[Connectors](/connectors)** — connect CSVs, Postgres, BigQuery, Fabric, and more.
 - **[Configuration](/configuration)** — every `dashdown.yaml` block in one place.

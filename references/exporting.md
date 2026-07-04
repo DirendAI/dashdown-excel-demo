@@ -22,8 +22,7 @@ search keeps working with no server.
 Every built page shows a small **"Generated &lt;time&gt;"** stamp at the foot of the
 content, so readers know exactly when the snapshot was produced. It's automatic
 (nothing to configure), localized to the reader's time zone, and appears only in
-`dashdown build` output — never on the live server. It's hidden in embeds and in
-PDF/print.
+`dashdown build` output — never on the live server. It's hidden in PDF/print.
 :::
 
 ### Dynamic detail pages (`static_paths`)
@@ -36,7 +35,7 @@ can't know which slug values exist. Opt in with a `static_paths` frontmatter blo
 ---
 title: Channel detail
 static_paths:
-  connector: main        # optional, default "main"
+  connector: demo        # optional — defaults to the project's default source
   query: SELECT DISTINCT channel FROM downloads ORDER BY channel
 ---
 ```

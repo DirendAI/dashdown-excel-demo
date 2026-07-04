@@ -21,8 +21,12 @@ Pick a channel above — the chart re-queries. The `'${channel}' = ''` guard mak
 | Component     | Purpose                                                   |
 | ------------- | -------------------------------------------------------- |
 | `<Dropdown>`  | Single- or multi-select (`multi`). Multi feeds `IN (…)`. |
+| `<Combobox>`  | Searchable single-select for high-cardinality columns (server-side search). See [Combobox](/components/combobox). |
 | `<Search>`    | A free-text filter value.                                |
 | `<DateRange>` | A start/end date pair with presets.                      |
+| `<RangeSlider>` | A numeric low/high range, dual-handle slider. See [RangeSlider](/components/range-slider). |
+| `<Slider>`    | A single-value numeric threshold, one-handle slider. See [Slider](/components/slider). |
+| `<ButtonGroup>` | A single-select segmented control for a few fixed options. See [ButtonGroup](/components/button-group). |
 | `<Toggle>`    | A boolean on/off switch — "show only X". See [Toggle](/components/toggle). |
 
 :::note
@@ -31,6 +35,29 @@ fixed snapshot. `dashdown build` strips them from static exports automatically.
 The [full-text `<SiteSearch>`](/search) is **not** a filter — it searches a
 static index and ships in exports.
 :::
+
+### Debouncing
+
+Typing in a `<Search>` / `<Combobox>` or dragging a `<Slider>` / `<RangeSlider>`
+doesn't fire a query on every keystroke or pixel. A change waits for a short
+**quiet period** (default **300 ms**) before it commits and re-fetches, so a burst
+of input coalesces into one fetch — the handle and readout still move instantly.
+
+Set the project-wide default in `dashdown.yaml`, and override per control with a
+`debounce=` attribute (both in milliseconds):
+
+```yaml
+filters:
+  debounce: 500   # raise it for a slow, per-query-expensive warehouse (BigQuery)
+```
+
+```markdown
+<Search name="q" debounce={800} />   <!-- this control only -->
+```
+
+Raise it when each query is slow or billed so deliberate typing can't fan out a
+wave of partial-input queries; lower it (even `0` = immediate) for a snappy local
+backend. → **[Configuration](/configuration#filters)**.
 
 ## Where filters appear
 
@@ -51,6 +78,9 @@ To gather page-wide filters into a single row at the top instead, add **`bar`**:
 ```markdown
 <DateRange name="period" bar />
 <Dropdown name="region" data={regions} column="region" bar />
+<RangeSlider name="price" min={0} max={1000} bar />
+<ButtonGroup name="tier" options="High,Mid,Budget" bar />
+<Toggle name="paid" label="Paid only" bar />
 <Search name="q" bar />
 ```
 
@@ -113,9 +143,7 @@ selection still applies once you navigate to a date-aware page.
 **Placement & persistence.** On a normal page the control lives in the sticky
 app header (reachable even when scrolled). The selection **persists across
 navigation** (localStorage), so it behaves as one global filter rather than a
-per-page one — URL params still win over the remembered value. When a page is
-[embedded](/embedding) (`?_embed`) the header chrome is omitted, so the control
-renders as an ordinary filter in the filter bar instead. [Static builds](/exporting)
+per-page one — URL params still win over the remembered value. [Static builds](/exporting)
 omit it (a fixed snapshot can't be re-filtered), like the other filter controls.
 
 It reuses the same control as the [`<DateRange>`](/components/date-range)

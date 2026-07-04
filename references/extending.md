@@ -62,7 +62,7 @@ components/Timeline/
 
 Dashdown imports the `.py` and serves the `.js`/`.css` at
 `/_dashdown/components/<folder>/<file>`, injecting them into every page — on the
-dev server, in `dashdown build` exports, and in embeds alike. No `assets/`
+dev server and in `dashdown build` exports alike. No `assets/`
 wiring, no `<script>` tag in `render()`, and the `.py` source is **never**
 web-served. The contract:
 
@@ -137,11 +137,11 @@ rows)`, and register it under a type name. `__init__` receives the connector's
 `sources.yaml` block as `config`:
 
 ```python
-# components/clickhouse.py
+# components/trino.py
 from dashdown import Connector, QueryResult, register_connector
 
-@register_connector("clickhouse")
-class ClickHouseConnector(Connector):
+@register_connector("trino")
+class TrinoConnector(Connector):
     def query(self, sql: str) -> QueryResult:
         rows, cols = my_client.run(sql)   # however your backend executes SQL
         return QueryResult(columns=cols, rows=rows)
@@ -155,8 +155,8 @@ Then point a source at it in `sources.yaml`:
 ```yaml
 # sources.yaml
 warehouse:
-  type: clickhouse
-  host: ${CH_HOST}
+  type: trino
+  host: ${TRINO_HOST}
 ```
 
 ### Shipping a connector as a plugin
@@ -169,7 +169,7 @@ asks for that type:
 ```toml
 # the connector package's pyproject.toml
 [project.entry-points."dashdown.connectors"]
-clickhouse = "dashdown_clickhouse:ClickHouseConnector"
+trino = "dashdown_trino:TrinoConnector"
 ```
 
 This is the exact mechanism the built-in connectors use — see

@@ -27,7 +27,6 @@ dashdown <command> --help  # options for one command
 | [`build`](#build) | Export a static site (HTML + pre-rendered data) |
 | [`pdf`](#pdf) | Export a presentation PDF |
 | [`screenshot`](#screenshot) | Capture a page to a PNG and verify its charts drew |
-| [`embed-token`](#embed-token) | Mint a signed token for an authenticated embed |
 
 ## serve
 
@@ -54,8 +53,8 @@ full project reload (connectors are rebuilt). See [Getting started](getting-star
 ## new
 
 Scaffold a new project directory — a `dashdown.yaml`, `sources.yaml`, a sample
-page and data, and a tool-agnostic `AGENTS.md` authoring guide (plus a Claude Code
-skill) so a coding agent opening the project knows the platform.
+page and data, and a tool-agnostic `AGENTS.md` authoring guide (plus a per-tool skill)
+so a coding agent opening the project knows the platform.
 
 ```bash
 dashdown new my-dashboard
@@ -63,10 +62,20 @@ cd my-dashboard
 dashdown serve .
 ```
 
+`--target` picks which coding agents to set up a wrapper for (default `claude`); the
+choice is recorded in `dashdown.yaml` as `agents:`, so later `dashdown skill` runs keep
+them in sync. `AGENTS.md` + `.references/` are always installed regardless.
+
+```bash
+dashdown new my-dashboard --target claude,cursor   # set up both wrappers
+```
+
+See [Coding agents](/ai/coding-agents) for the supported tools.
+
 ## skill
 
-Install or update the bundled coding-agent guide (`AGENTS.md` + the `references/`
-shards + the Claude Code authoring skill) in an **existing** project. The guide is
+Install or update the bundled coding-agent guide (`AGENTS.md` + the `.references/`
+shards + a per-tool authoring skill) in an **existing** project. The guide is
 versioned with the framework, so a project scaffolded on an older release pulls the
 current one without re-scaffolding. See [Coding agents](/ai/coding-agents) for the full
 story.
@@ -75,7 +84,12 @@ story.
 dashdown skill                 # fill in anything missing (keeps your local edits)
 dashdown skill --refresh       # overwrite to this version's guide (prunes stale shards)
 dashdown skill -p ./dashboard  # target another project directory
+dashdown skill --target cursor # also/instead install the Cursor wrapper
 ```
+
+Which tools it installs for resolves by precedence: an explicit `--target a,b` → the
+project's `dashdown.yaml` `agents:` list → tools it auto-detects (a marker dir like
+`.claude/` or `.cursor/` already present) → `claude`.
 
 ## check
 
@@ -124,7 +138,7 @@ quickest way to **test that a connector connects** and **inspect real data** whi
 authoring; an agent uses it the same way.
 
 ```bash
-dashdown query "SELECT * FROM sales LIMIT 5"                       # connector: main
+dashdown query "SELECT * FROM sales LIMIT 5"                       # runs on the default source
 dashdown query "SELECT count(*) FROM orders" -c warehouse -f json
 dashdown query "SELECT region, sum(amount) FROM sales GROUP BY region" -p .
 ```
@@ -132,7 +146,7 @@ dashdown query "SELECT region, sum(amount) FROM sales GROUP BY region" -p .
 | Option | Default | Notes |
 | --- | --- | --- |
 | `-p, --project` | `.` | Project directory. |
-| `-c, --connector` | `main` | Connector from `sources.yaml`. An unknown name lists the configured ones. |
+| `-c, --connector` | the default source | Connector from `sources.yaml`. An unknown name lists the configured ones. |
 | `-f, --format` | `table` | `table`, `json` (`{columns, rows}`), or `csv`. |
 | `--max-rows` | `50` | Cap rows printed (`0` = all). Total count goes to stderr. |
 | `--tables` | off | List the connector's tables/views (`table`/`schema`/`type`) and exit — instead of a SQL argument. |
@@ -148,8 +162,8 @@ Instead of hand-writing a `SELECT * … LIMIT 0` (and remembering each warehouse
 `information_schema` dialect), ask the connector directly:
 
 ```bash
-dashdown query --tables -c main                  # what tables/views exist?
-dashdown query --schema sales -c main -f json    # what columns does `sales` have?
+dashdown query --tables                          # what tables/views exist?
+dashdown query --schema sales -f json            # what columns does `sales` have?
 ```
 
 Each connector knows how to answer in its own dialect, so the same two commands
@@ -281,25 +295,3 @@ playwright install chromium
 ```
 
 See [Exporting](exporting).
-
-## embed-token
-
-Mint a signed embed token and a ready-to-paste `<script>` snippet for one page.
-Needed only when the dashboard has [auth](authentication) enabled — a cross-origin
-iframe can't send credentials, so it carries a scoped token instead. Requires an
-`embed:` block with a `secret` in `dashdown.yaml`.
-
-```bash
-dashdown embed-token . /sales
-dashdown embed-token . /sales --ttl 3600 --host https://dash.example
-```
-
-| Argument / Option | Default | Notes |
-| --- | --- | --- |
-| `page` | — | Page path to embed (positional), e.g. `/sales`. |
-| `-p, --project` | `.` | Project directory (positional). |
-| `--ttl` | `embed.token_ttl` | Token lifetime in seconds. |
-| `--host` | — | Public dashboard origin baked into the snippet. |
-
-The token is scoped to that exact page and the queries it reads, so it can't be
-replayed against other resources. See [Embedding](embedding).

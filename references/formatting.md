@@ -26,6 +26,7 @@ never changes the underlying data, so a CSV export still carries the raw values.
 | `format`     | Renders                          | Example (`en-US`)        |
 | ------------ | -------------------------------- | ------------------------ |
 | `number`     | Grouped integer/decimal          | `1234567` → `1,234,567`  |
+| `compact`    | Abbreviated magnitude — 3 significant digits (or pin with `decimals=`); on a `<Counter>` the exact value shows on hover | `3338316067` → `3.34B`   |
 | `currency`   | Money, with a symbol             | `63712.9` → `$63,712.90` |
 | `percent`    | Number with a `%` suffix         | `42.5` → `42.5%` *(not ×100 — the value is shown as-is)* |
 | `date`       | Locale-aware date                | `2026-01-31` → `Jan 31, 2026` |
@@ -33,6 +34,11 @@ never changes the underlying data, so a CSV export still carries the raw values.
 
 Omit `format` and values pass through unchanged — except that `decimals=` on its
 own still rounds a bare number, so `decimals=2` rounds without picking a style.
+
+On charts, value-axis **ticks** compact automatically once they reach 1,000
+(`1,500,000,000` → `1.5B`) so a big-number scale stays readable instead of
+clipping — tooltips and data labels keep the exact format (`number`/`currency`
+symbols included). Set `format="compact"` explicitly to compact the tooltips too.
 
 :::note
 `percent` does **not** multiply by 100 — it appends `%` to the value as stored.
@@ -53,15 +59,15 @@ These tune the chosen `format`. Set only the ones you need:
 
 ### Example
 
-```markdown
-:::query name=fmt_demo connector=main
+````markdown
+```sql fmt_demo
 SELECT SUM(downloads) AS downloads, SUM(downloads) * 0.12 AS revenue
 FROM downloads
-:::
+```
 
 <Counter data={fmt_demo} column="downloads" format="number" label="Total downloads" />
 <Counter data={fmt_demo} column="revenue" format="currency" currency="EUR" decimals=2 label="Revenue (€0.12 / download)" />
-```
+````
 
 Rendered live from this site's CSV:
 
@@ -114,7 +120,7 @@ format:
 ```
 
 All three keys are optional, and a malformed block fails fast at startup (like
-`auth:` / `branding:`), so the server never runs with a half-broken config.
+`branding:`), so the server never runs with a half-broken config.
 
 **Precedence — component attribute wins, the block fills the gaps.** A widget's
 own `locale=` / `currency=` / `date_format=` always overrides the project default;
@@ -129,8 +135,8 @@ number (a row count, a download total) into money. The block sets *values*, not
 *whether* a value is formatted.
 :::
 
-Defaults are baked into the page, so they apply identically on the dev server, in
-a `dashdown build` static export, and in an embed.
+Defaults are baked into the page, so they apply identically on the dev server and
+in a `dashdown build` static export.
 
 :::note
 These docs themselves set `format: { locale: en-US }` in `docs/dashdown.yaml` —

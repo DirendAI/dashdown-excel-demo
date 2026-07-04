@@ -41,16 +41,16 @@ parameter, so a single page serves a whole collection. A file named `[id].md`
 matches `/customers/5`, `/customers/42`, … and the captured value is available
 to SQL as `${id}`:
 
-```markdown
+````markdown
 <!-- pages/customers/[id].md  →  /customers/<id> -->
-:::query name=customer connector=main
+```sql customer
 SELECT customer_id, name, plan, monthly_spend
 FROM customers
 WHERE customer_id = ${id}
-:::
+```
 
 <Table data={customer} />
-```
+````
 
 A directory works the same way (`pages/customers/[id]/index.md`), and you can
 nest them. Matching prefers the most specific route — an exact file or directory
@@ -100,7 +100,7 @@ A ` ```mermaid ` fenced code block renders as an SVG diagram **client-side and
 fully offline** — the Mermaid bundle is vendored and lazy-loaded only on pages
 that contain a diagram, and every diagram re-themes itself when the reader toggles
 light/dark. There is no data API and no CDN, so diagrams render identically on the
-dev server, in a `dashdown build` export, and inside an embed. Sequence,
+dev server and in a `dashdown build` export. Sequence,
 flowchart, entity-relationship, state, class, Gantt, and pie diagrams are all
 supported.
 
